@@ -1,0 +1,90 @@
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.representer.Representer;
+import java.util.ArrayList;
+import java.util.List;
+
+interface Formatter {
+    String format(Object object);
+}
+
+class ElectricVehicle {
+    private String model;
+    private String brand;
+    private int autonomy;
+    private int maxSpeed;
+    private double price;
+
+    public ElectricVehicle(String model, String brand, int autonomy, int maxSpeed, double price) {
+        this.model = model;
+        this.brand = brand;
+        this.autonomy = autonomy;
+        this.maxSpeed = maxSpeed;
+        this.price = price;
+    }
+}
+
+class UF {
+    private String name;
+    private String abbreviation;
+    private String capital;
+    private String coordinates;
+    private long population;
+    private double area;
+    private double density;
+    private List<String> topCities;
+
+    public UF(String name, String abbreviation, String capital, String coordinates, long population, double area, List<String> topCities) {
+        this.name = name;
+        this.abbreviation = abbreviation;
+        this.capital = capital;
+        this.coordinates = coordinates;
+        this.population = population;
+        this.area = area;
+        this.density = population / area;
+        this.topCities = topCities;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) throws JsonProcessingException {
+        ElectricVehicle electricVehicle = new ElectricVehicle("Model S", "Tesla", 400, 250, 79999.99);
+        List<String> topCities = new ArrayList<>();
+        topCities.add("São Paulo");
+        topCities.add("Rio de Janeiro");
+        topCities.add("Belo Horizonte");
+        UF uf = new UF("São Paulo", "SP", "São Paulo", "23.5505° S, 46.6333° W", 45000000, 248219.481, topCities);
+
+        Formatter formatter;
+        String format = "JSON";
+
+        switch (format) {
+            case "XML":
+                formatter = object -> "<xml></xml>";
+                break;
+            case "YAML":
+                Representer representer = new Representer();
+                representer.setDefaultFlowStyle(org.yaml.snakeyaml.DumperOptions.FlowStyle.BLOCK);
+                Yaml yaml = new Yaml(new Constructor(UF.class), representer);
+                formatter = object -> yaml.dump(object);
+                break;
+            case "JSON":
+            default:
+                ObjectMapper objectMapper = new ObjectMapper();
+                formatter = object -> {
+                    try {
+                        return objectMapper.writeValueAsString(object);
+                    } catch (JsonProcessingException e) {
+                        e.printStackTrace();
+                        return "";
+                    }
+                };
+                break;
+        }
+
+        String formattedContent = formatter.format(uf);
+        System.out.println(formattedContent);
+    }
+}
